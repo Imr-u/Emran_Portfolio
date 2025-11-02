@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/rafsanahmed28/Rafsan/3149a4845a8a16e5401212ec3e0d3eb6cce10d2c/public/logo.svg", height = 85px, width=auto/>
+  <img src="https://github.com/Imr-u/Emran_Portfolio/blob/main/public/logo.png", height = 85px, width=auto/>
 </p>
 <h1 align="center">
-  rafsanahmed.com - v1
+  Emran-abubeker.vercel.app - v1
 </h1>
 <p align="center">
   The first iteration of my first personal website <a href="https://rafsanahmed.com" target="_blank">rafsanahmed.com</a> 
