@@ -1,0 +1,43 @@
+#credits {
+  padding-top: 40px;
+  align-items: center;
+}
+
+.ending-credits {
+  font-family: "NTR", sans-serif;
+  color: var(--green-bright);
+  text-align: center;
+  width: 100%;
+  font-size: 16px;
+}
+
+.ending-credits a {
+  color: var(--green-bright) !important;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.ending-credits .side-navbar {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .ending-credits .side-navbar {
+    display: flex;
+    position: inherit;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 0;
+  }
+
+  .ending-credits .side-navbar .side-navbar-divider {
+    display: none;
+  }
+
+  .ending-credits .side-navbar button.star-btn {
+    display: none;
+  }
+
+}
+
