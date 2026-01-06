@@ -58,7 +58,7 @@ Also, if you're using components from third-party sources included in this codeb
 | Color          | Hex                                                                  |
 | -------------- | -------------------------------------------------------------------- |
 | Lightest Slate | ![#E2E8FD](https://placehold.co/100x25/E2E8FD/000000?text=%23E2E8FD) |
-| Green Bright   | ![#64D98A](https://placehold.co/100x25/64D98A/000000?text=%2364D98A) |
+| Orange Bright  | ![#f97316](https://placehold.co/100x25/f97316/000000?text=%2364D98A) |
 | Dark Green     | ![#03141A](https://placehold.co/100x25/03141A/ffffff?text=%2303141A) |
 | Dark Blue      | ![#060A17](https://placehold.co/100x25/060A17/ffffff?text=%23060A17) |
 | Dark Purple    | ![#0B0F1D](https://placehold.co/100x25/0B0F1D/ffffff?text=%230B0F1D) |
