@@ -1,156 +1,149 @@
-const covid19 = (
+const Covid19 = {
+scraper: `
+from bs4 import BeautifulSoup
+import requests
+import datetime
+import os
+import pandas as pd
 
-`-- General Querying and Finding out the Percentage of People Vaccinated Over Time against Population 
 
--- Checking the death rate of the infected in Canada, datediff of 7 because cases and deaths were updated weekly
-SELECT Location, Date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS infection_death_percentage
-FROM covidproject.coviddeaths
-WHERE Location = 'Canada' AND MOD(DATEDIFF(DATE, '2020-01-05'),7) = 0
-ORDER BY 1,2
-;
+url = "https://api.nbe.gov.et/api/filter-exchange-rates"
 
--- Rate of infection against population of Canada
-SELECT Location, Date, Population, total_cases, (total_cases/population)*100 AS infection_percentage
-FROM covidproject.coviddeaths
-WHERE Location = 'Canada' AND MOD(DATEDIFF(DATE, '2020-01-05'),7) = 0
-ORDER BY 1,2
-;
+date_str = datetime.date.today().strftime("%Y-%m-%d")
+page = requests.get(url, params={"date": date_str})
 
--- Checking countries with the highest infection counts around the world
-SELECT Location, Population, MAX(CAST(total_cases AS unsigned)) AS max_infection_count
-FROM covidproject.coviddeaths
-WHERE Continent != '' -- Empty string value in the dataset
-GROUP BY Location, Population
-ORDER BY max_infection_count DESC
-;
+data = page.json()
+file_path = "ETB_fx.csv"
+records = [ ]
 
--- Countries with the Highest Percentage of Infection Compared to Population
-SELECT Location, Population, 
-       MAX(CAST(total_cases AS unsigned)) AS max_infection_count, 
-       MAX(CAST(total_cases AS UNSIGNED)/population)*100 AS percentage_population_infected
-FROM covidproject.coviddeaths
-WHERE Continent != ''
-GROUP BY Location, Population
-ORDER BY percentage_population_infected DESC
-;
+if data.get("success") and "data" in data:
+    for item in data["data"]:
+        currency_code = item["currency"]["code"]  # USD, EUR, etc.
+        buying = item["buying"]
+        selling = item["selling"]
+        date_val = item["date"]
+        avg = item["weighted_average"]
+        scrape_time = datetime.date.today()
+        pair = f"{currency_code}BIRR"
 
--- Countries with the Highest Death Count
-SELECT Location, MAX(CAST(total_deaths AS UNSIGNED)) AS max_death_count
-FROM covidproject.coviddeaths
-WHERE Continent != ''
-GROUP BY Location
-ORDER BY max_death_count DESC
-;
+        records.append({
+            "buying": buying,
+            "selling": selling,
+            "avg": avg,
+            "scrape_time": scrape_time,
+            "Pair": pair,
+            "date": date_str
+        })
+df_new = pd.DataFrame(records)
 
--- Countries with Highest Death Count Percentage
-SELECT Location, Population, 
-       MAX(CAST(total_cases AS UNSIGNED)) AS total_infection_count, 
-       MAX(CAST(total_deaths AS UNSIGNED)) AS total_death_count, 
-       MAX(CAST(total_deaths AS UNSIGNED))/MAX(CAST(total_cases AS UNSIGNED))*100 AS total_death_per_case_percent
-FROM covidproject.coviddeaths
-WHERE Continent != ''
-GROUP BY Location, Population
-ORDER BY total_death_per_case_percent DESC
-;
 
--- Max Death Count for Continents
-SELECT location, MAX(CAST(total_deaths AS UNSIGNED)) AS max_death_count
-FROM covidproject.coviddeaths
-WHERE Continent = '' AND Location NOT LIKE '%income' AND Location not in ('World', 'European Union')
-GROUP BY location
-ORDER BY max_death_count DESC
-;
+if os.path.exists(file_path):
+    old_df = pd.read_csv(file_path)
+    df_combined = pd.concat([old_df, df_new], ignore_index=True).drop_duplicates(subset=["date","scrape_time", "Pair"], keep="last")
+else:
+    df_combined = df_new
 
--- Global Numbers for daily cases to deaths ratio, weekly updates
-SELECT Date, SUM(new_cases) AS Daily_total_cases, SUM(new_deaths) AS Daily_total_deaths, SUM(new_deaths)/SUM(new_cases)*100 AS Daily_death_percentage
-FROM covidproject.coviddeaths
-WHERE Continent != '' AND MOD(DATEDIFF(DATE, '2020-01-05'),7) = 0
-GROUP BY Date
-ORDER BY 1,2
-LIMIT 1, 226
-;
+# Step 4: save
+df_combined.to_csv(file_path, index=False)`,
 
--- World Value for Cases to Death Ratio
-SELECT SUM(new_cases) AS total_cases, SUM(new_deaths) AS total_deaths, SUM(new_deaths)/SUM(new_cases)*100 AS death_percentage
-FROM covidproject.coviddeaths
-WHERE Continent != ''
--- GROUP BY Date
-ORDER BY 1,2
-;
+scheduler: `name: ETB_fx Scraper
 
--- From here, we start looking at Vaccinations
--- Total Population vs Vaccinations with a Rolling Count
-SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(CAST(vac.new_vaccinations AS UNSIGNED)) OVER (PARTITION BY dea.Location ORDER BY dea.Location, dea.date) AS Rolling_People_Vaccinated
-FROM covidproject.coviddeaths dea
-JOIN covidproject.covidvaccinations vac
-	ON dea.location = vac.location
-    AND dea.date = vac.date
-WHERE dea.continent != ''
-ORDER BY 2,3
-;
+on:
+  schedule:
+    - cron: "0 */12 * * *"   # every 12 hours
+  workflow_dispatch:         # allow manual run
 
--- CTE to Calculate Population vs Vaccination
-WITH PopvsVac (Continent, Location, Date, Population, New_Vaccinations, Rolling_People_Vaccinated)
-AS
-(
-SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(CAST(vac.new_vaccinations AS UNSIGNED)) OVER (PARTITION BY dea.Location ORDER BY dea.Location, dea.date) AS Rolling_People_Vaccinated
-FROM covidproject.coviddeaths dea
-JOIN covidproject.covidvaccinations vac
-	ON dea.location = vac.location
-    AND dea.date = vac.date
-WHERE dea.continent != ''
-ORDER BY 2,3
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pandas
+
+      - name: Run scraper
+        working-directory: Scraper_&_datasets/Ethiopia_fx
+        run: |
+          python ETB_fx.py
+
+      - name: Commit and push results
+        working-directory: Scraper_&_datasets/Ethiopia_fx
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ETB_fx.csv
+          git commit -m "Update ETB_fx.csv on $(date '+%Y-%m-%d')[skip ci]" || echo "No changes to commit"
+          git push`,
+
+normalizer: `import pandas as pd
+
+# Load your data
+df = pd.read_csv("final_fx_dataset.csv")
+
+# Ensure date column is datetime
+df['scrape_date'] = pd.to_datetime(df['scrape_date'])
+
+# Define the common start date
+start_date = pd.Timestamp("2025-10-08")
+
+# Drop duplicates within each pair_id + date (keeping the last row)
+df = df.drop_duplicates(subset=['pair_id', 'scrape_date'], keep='last')
+
+# Create a filled DataFrame
+filled_df = (
+    df.groupby('pair_id', group_keys=False)
+      .apply(lambda g: (
+          g.set_index('scrape_date')
+           .sort_index()
+           .reindex(pd.date_range(start=max(start_date, g['scrape_date'].min()),
+                                  end=g['scrape_date'].max(), freq='D'))
+           .ffill().bfill()
+           .assign(pair_id=g['pair_id'].iloc[0])
+           .reset_index()
+           .rename(columns={'index': 'scrape_date'})
+      ))
 )
-SELECT *, (Rolling_People_Vaccinated/population)*100 AS Percent_Population_Vaccinated
-FROM PopvsVac
-;
+# Calculate peak-relative change from base
+def peak_relative_change(prices):
+    """
+    prices: pd.Series of exchange rates for a single pair_id, sorted by date
+    Returns: pd.Series of changes relative to peak/base
+    """
+    base = prices.iloc[0]
+    peak = base
+    changes = []
+    
+    for price in prices:
+        if price >= peak:
+            # new peak: positive change from base or previous peak
+            peak = price
+            change = (price - base)/ base
+        else:
+            # if below base, negative change
+            change = (price - base)/ base if price < base else (price - base)/base
+        changes.append(change)
+    return pd.Series(changes, index=prices.index)
 
--- Same but Temp Table Format
-DROP TABLE IF EXISTS percentpopulationvaccinated;
-CREATE TEMPORARY TABLE percentpopulationvaccinated
-(
-continent varchar(255),
-Location varchar(255),
-Date datetime,
-Population BIGINT,
-New_vaccinations BIGINT,
-Rolling_People_Vaccinated BIGINT
-)
-;
-INSERT INTO percentpopulationvaccinated
-SELECT dea.continent, dea.location, dea.date, dea.population, @new_vacc := IF(vac.new_vaccinations = '' OR vac.new_vaccinations IS NULL, 0, CAST(vac.new_vaccinations AS UNSIGNED)) AS New_vaccinations,
-    SUM(@new_vacc) OVER (PARTITION BY dea.Location ORDER BY dea.location, dea.date) AS Rolling_People_Vaccinated
--- @new_vacc was defined to get around the Incorrect integer error because of empty strings in the data
-FROM covidproject.coviddeaths dea
-JOIN covidproject.covidvaccinations vac
-	ON dea.location = vac.location
-    AND dea.date = vac.date
-WHERE dea.continent != ''
--- WHERE New_Vaccinations != 0 -- Just to filter out
--- ORDER BY 2,3
-;
-SELECT *, (Rolling_People_Vaccinated/population)*100 AS Percent_Population_Vaccinated
-FROM percentpopulationvaccinated
-;
+filled_df['peak_change'] = filled_df.groupby('pair_id')['avg_price'].transform(peak_relative_change)
 
--- Creating Views to Store Data for Visualizations
-CREATE VIEW percentpopulationvaccinated AS
-SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(CAST(vac.new_vaccinations AS UNSIGNED)) OVER (PARTITION BY dea.Location ORDER BY dea.Location, dea.date) AS Rolling_People_Vaccinated
-FROM covidproject.coviddeaths dea
-JOIN covidproject.covidvaccinations vac
-	ON dea.location = vac.location
-    AND dea.date = vac.date
-WHERE dea.continent != ''
--- ORDER BY 2,3
-;
+filled_df['weighted_spread'] = filled_df['spread'] / filled_df['avg_price']
 
-SELECT * 
-FROM covidproject.percentpopulationvaccinated
-;`
+# Save result
+filled_df.to_csv("final_final.csv", index=False)`
+};
 
-);
-
-export default covid19;
+export default Covid19;

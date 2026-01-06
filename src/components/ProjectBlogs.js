@@ -10,20 +10,20 @@ gsap.registerPlugin(ScrollTrigger);
 const blogArticles = [
   {
     id: 1,
-    title: "How I Built My Portfolio Website with Popular Coding Tools — Without a Coding Background",
-    description: "A journey of vision, curiosity, and how AI empowered me to build my data analyst portfolio that once felt impossible.",
+    title: "Building an African Currency Data Platform: From Curiosity to Production",
+    description: "How I went from simple question 'how is our economy performing' into a live, automated platform that now tracks the financial heartbeat of Africa.",
     image: "https://cdn-images-1.medium.com/v2/resize:fit:800/1*tMEUkqqBtQ4v-LBbCzLqZA.jpeg",
-    mediumUrl: "https://medium.com/@rafsanahmed2828/how-i-built-my-portfolio-website-with-popular-coding-tools-without-a-coding-background-e874e863da4d",
-    date: "June 2025"
+    mediumUrl: "https://medium.com/@imruabubeker/afri-rate-4d1e87baa1ad",
+    date: "Sep 2025"
   },
-  {
+ /* {
     id: 2,
     title: "From Data to Insights: Google’s Cyclistic Case Study",
     description: "A conclusive study of Cyclistic’s bike users and user patterns & behaviors using SQL and Tableau.",
     image: "https://miro.medium.com/v2/resize:fit:720/format:webp/1*ljL5VEiMpR8mHEs9l0dznw.jpeg",
     mediumUrl: "https://medium.com/@rafsanahmed2828/from-data-to-insights-googles-cyclistic-case-study-04fb362c2d0d",
     date: "November 2024"
-  }
+  } */
 ];
 
 

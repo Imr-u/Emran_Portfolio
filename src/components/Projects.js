@@ -10,7 +10,7 @@ import "../styles/Projects.css";
 import {
   VscFolder, VscFolderOpened, VscMarkdown, VscChevronRight
 } from "react-icons/vsc";
-import { SiMysql, SiPython } from "react-icons/si";
+import { SiMysql, SiPython, SiYaml } from "react-icons/si";
 import { BsDatabase } from "react-icons/bs";
 
 gsap.registerPlugin(ScrollTrigger, Flip);
@@ -22,6 +22,8 @@ function getFileIcon(file) {
   if (file.name.endsWith(".md")) return <VscMarkdown style={{ ...iconStyle, color: "#519975" }} />;
   if (file.name.endsWith(".sql")) return <SiMysql style={{ ...iconStyle, color: "#00758f" }} />;
   if (file.name.endsWith(".ipynb")) return <SiPython style={{ ...iconStyle, color: "#3572A5" }} />;
+  if (file.name.endsWith(".py")) return <SiPython style={{ ...iconStyle, color: "#5a71beff" }} />;
+  if (file.name.endsWith(".yml")) return <SiYaml style={{ ...iconStyle, color: "#81b2daff" }} />;
   return <VscMarkdown style={{ ...iconStyle, color: "#8da1b9" }} />;
 }
 

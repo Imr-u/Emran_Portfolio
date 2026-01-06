@@ -14,6 +14,7 @@
 ![homepage](https://raw.githubusercontent.com/rafsanahmed28/Rafsan/refs/heads/main/public/assets/homepage.png)
 
 ## 💚 Credits 
+Rafsan Ahmed who let us custom his website
 Robot Animation: [Shunya Koide](https://codepen.io/shunyadezain)
 
 Code references and design inspirations: [Gazi Jarin](https://github.com/gazijarin/Gazi) and [Brittany Chiang](https://github.com/bchiang7/v4)
@@ -26,7 +27,7 @@ Also, if you're using components from third-party sources included in this codeb
 1. Cloning the Repo
 
    ```sh
-   git clone https://github.com/rafsanahmed28/Rafsan.git
+   https://github.com/Imr-u/Emran_Portfolio.git
    ```
 
 ## 🛠 Installation & Setup

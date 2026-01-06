@@ -1,375 +1,294 @@
 const cyclistic = {
-cleaning: `-- In this query, we'll go through the Data Cleaning process
--- 12 months of data (June 2023- May 2024) was imported
--- Total 5743278 rows imported
--- P.S. Even though deleting data is not a good practice,
--- but this dataset had a lot of unusable and irrelevant data
-
-SELECT * 
-FROM cyclistic.cyclisticmain
-;
-
--- Checking for ride_id with more or less than 16 characters
-SELECT ride_id, length(ride_id) 
-FROM cyclistic.cyclisticmain
-WHERE length(ride_id)  != 16
-;
-
--- Removing the odd ride_id's, 3865 rows deleted
-DELETE 
-FROM cyclistic.cyclisticmain
-WHERE length(ride_id)  != 16
-;
-
--- 3 different ride types, electric_bike, classic_bike and docked_bike
-SELECT DISTINCT rideable_type
-FROM cyclistic.cyclisticmain
-;
-
--- Trying to find unusual lengths of ridetime
-SELECT *, TIMESTAMPDIFF(MINUTE, started_at, ended_at) AS time_difference
-FROM cyclistic.cyclisticclean
-WHERE TIMESTAMPDIFF(MINUTE, started_at, ended_at) <= 1 OR TIMESTAMPDIFF(MINUTE, started_at, ended_at) >=1440
-;
-
--- 192013 rows affected
-DELETE
-FROM cyclistic.cyclisticclean
-WHERE TIMESTAMPDIFF(MINUTE, started_at, ended_at) <= 1 OR TIMESTAMPDIFF(MINUTE, started_at, ended_at) >=1440
-;
-
--- The next data process removes a large portion of data which are missing which is why backup table was created
--- Backup Table: cyclisticmain, data will be cleaned on cyclisticcclean Table
-CREATE TABLE cyclisticclean AS
-SELECT * FROM cyclisticmain
-;
-
--- Checking for empty rows with no start_station_name
-SELECT start_station_name, COUNT(start_station_name)
-FROM cyclistic.cyclisticclean
-GROUP BY start_station_name
-;
-
--- Checking for empty rows with no end_station_name
-SELECT end_station_name, COUNT(start_station_name)
-FROM cyclistic.cyclisticclean
-GROUP BY end_station_name
-;
-
--- Checking the ride types for the empty rows resulted in some interesting insights as majority of the empty rows were from electric bikes
-SELECT rideable_type, COUNT(*)
-FROM cyclistic.cyclisticclean
-WHERE start_station_name = '' OR end_station_name = ''
-GROUP BY rideable_type
-;
-
--- We need to delete the empty rows to move forward with our analysis as they won't be useful for gathering insights from these trips
--- 1343975 rows affected
-DELETE
-FROM cyclistic.cyclisticclean
-WHERE start_station_name = '' OR start_station_id = '' OR end_station_name = ''  OR end_station_id = ''
-;
-
--- After deleting the empty rows of station_name, we will check why start_station_name and start_station_id doesn't have the same number
--- There are 1581 unique stations with 1553 unique station id's and this query helps to find that there are some stations with 2 distinct ids
--- This data doesn't really affect the accuracy much so we can ignore this part
-SELECT start_station_name, COUNT(DISTINCT start_station_id) AS distinct_ids
-FROM cyclistic.cyclisticclean
-GROUP BY start_station_name
-HAVING COUNT(DISTINCT start_station_id) > 1
-;
-
--- Checking for NULL values for start_lat
-SELECT start_lat, COUNT(*)
-FROM cyclistic.cyclisticclean
-GROUP BY start_lat
-ORDER BY start_lat
-;
-
--- Checking for NULL values for end_lat
-SELECT end_lat
-FROM cyclistic.cyclisticclean
-GROUP BY end_lat
-ORDER BY end_lat
-;
-
--- Removing empty cells and 0 values for end_lat
-DELETE
-FROM cyclistic.cyclisticclean
-WHERE end_lat = '' OR end_lat = '0'
-;
-
--- Checking for NULL values in member_casual column
-SELECT member_casual
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual
-ORDER BY member_casual
-;
-
--- Upon further inspection, we'll remove data where start_station and end_station are the same as it doesn't give much information about trip data
-DELETE
-FROM cyclistic.cyclisticclean
-WHERE start_station_name = end_station_name
-;
-
--- docked_bike are only used by casual members, this study is to compare to see how casual riders differ from members
--- docked_bike also has almost doubles the trip duration of classic_bike rides for casual riders
-SELECT member_casual, rideable_type, COUNT(*) AS number_of_rides_per_type, AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual, rideable_type
-;
-
--- As there are not enough information to determine its nature and the data seems a bit skewed, we'll keep docked_bike out of our analysis
-DELETE
-FROM cyclistic.cyclisticclean
-WHERE rideable_type = 'docked_bike'
-;
-
--- With that, the data cleaning process has ended. This is the final dataset we'll be working on
--- 3982402 rows is the cleaned data size from an initial data size of 5743278 rows
-SELECT *
-FROM cyclistic.cyclisticclean;
-;`,
-
-querying: `-- Here we'll dive deeper into the data and take a closer look at how different bikes are used, duration of the trips, usage in different days and months
--- Member vs Casual Total Rides and Average Trip Duration 
-SELECT member_casual, 
-	   COUNT(member_casual) AS number_of_rides,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual
-;
-
--- Member vs Casual Rides per Different Ride Types and Average Trip Duration
-SELECT member_casual, rideable_type, 
-	   COUNT(*) AS number_of_rides_per_type, 
-	   AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual, rideable_type
-;
-
--- Member vs Casual Rides Per Month
-SELECT member_casual, rideable_type, DATE_FORMAT(started_at, '%M') AS month_name,
-	   COUNT(*) AS rides_per_month,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual, rideable_type, month, month_name
-;
-
--- Member vs Casual Rides Per Weekday
-SELECT member_casual, rideable_type, DATE_FORMAT(started_at, '%W') AS weekday,
-	   COUNT(*) AS rides_per_weekday,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual, rideable_type, weekday
-ORDER BY weekday
-;
-
--- Member vs Casual Rides Per Hour
-SELECT member_casual, rideable_type, DATE_FORMAT(started_at, '%H') AS hour_of_day,
-	   COUNT(*) AS rides_per_hour,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY member_casual, rideable_type, hour_of_day
-ORDER BY hour_of_day
-;
-
--- Reference: Top 3 Most Popular Starting Station among riders
-SELECT start_station_name,
-	   COUNT(start_station_name) AS most_popular_start,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-GROUP BY start_station_name
-ORDER BY most_popular_start DESC
-LIMIT 3
-;
-
--- Top 10 Member Trip Starting Stations
--- Note: Instead of "WHERE member_casual = 'member'" the statement below was used 
--- because it contained a non-printable character which gave it a length of 7
-SELECT start_station_name,
-	   COUNT(*) AS most_popular_start,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_start_trip_duration_member
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'member%'
-GROUP BY start_station_name
-ORDER BY most_popular_start DESC
-LIMIT 10
-;
-
--- Top 10 Member Trip Ending Stations
-SELECT end_station_name,
-	   COUNT(*) AS most_popular_end,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_end_trip_duration_member
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'member%'
-GROUP BY end_station_name
-ORDER BY most_popular_end DESC
-LIMIT 10
-;
-
--- Top 10 Casual Trip Starting Stations
-SELECT start_station_name,
-	   COUNT(*) AS most_popular_start,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration_casual
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'casual%'
-GROUP BY start_station_name
-ORDER BY most_popular_start DESC
-LIMIT 10
-;
+scraper: `import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import os 
+from datetime import datetime
 
 
--- Top 10 Casual Trip Ending Stations
-SELECT end_station_name,
-	   COUNT(*) AS most_popular_end,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration_casual
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'casual%'
-GROUP BY end_station_name
-ORDER BY most_popular_end DESC
-LIMIT 10
-;
+URL = "https://corporate.ethiopianairlines.com/AboutEthiopian/careers/results"
+Headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36" ,"Accept-Encoding": "gzip, deflate, br, zstd",  "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1" }
+
+page = requests.get(URL, headers = Headers)
+
+soup = BeautifulSoup(page.content, "html.parser")
 
 
--- The Most Popular Starting Station Hourly for Member Riders
-SELECT member_casual, COUNT(*) AS total, start_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-FROM cyclistic.cyclisticclean
-WHERE start_station_name = 'Clinton St & Washington Blvd' AND member_casual LIKE 'member%'
-GROUP BY member_casual, start_station_name, hour_of_day
-ORDER BY hour_of_day
-;
+results = []
+scrape_time = datetime.now().strftime("%Y-%m-%d")
+job_items = soup.find_all("li")
 
--- The Most Popular Ending Station Hourly for Member Riders
-SELECT member_casual, COUNT(*) AS total, end_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-FROM cyclistic.cyclisticclean
-WHERE end_station_name = 'Clinton St & Washington Blvd' AND member_casual LIKE 'member%'
-GROUP BY member_casual, end_station_name, hour_of_day
-ORDER BY hour_of_day
-;
+for item in job_items:
+    header = item.find("div", class_="card-header")
+    if not header:
+        continue  # not a real posting
 
--- Combine the Results of the Two Earlier Queries and Sum the Total Trips
--- Most Popular Member Station Trips Per Hour
-SELECT 
-    start_station_name AS member_popular_station,
-    hour_of_day,
-    SUM(total) AS total_trips
-FROM (
-    -- The Most Popular Starting Station Hourly for Member Riders
-    SELECT COUNT(*) AS total, start_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-    FROM cyclistic.cyclisticclean
-    WHERE start_station_name = 'Clinton St & Washington Blvd' AND member_casual LIKE 'member%'
-    GROUP BY start_station_name, hour_of_day
+    # Extract simple text fields
+    title_tag = header.find("strong", string=lambda x: x and "Postion" in x)
+    location_tag = header.find("strong", string=lambda x: x and "Location" in x)
+    announcement_tag = header.find("strong", string=lambda x: x and "Announcement" in x)
+
+    # Clean values
+    def clean_next_text(tag):
+        if not tag:
+            return None
+        # text is often inside the next_sibling
+        return tag.next_sibling.strip().replace("\xa0", " ")
+
+    job_title = clean_next_text(title_tag)
+    location = clean_next_text(location_tag)
+    announcement = clean_next_text(announcement_tag)
+
+    # Move into the collapsible body (candidate part)
+    panel_body = item.find("div", class_="panel-body")
+    candidate_list = []
+
+    # Locate the DATE & TIME section
+    date_time_p = None
     
-    UNION ALL
+    for p in item.find_all("p"):
+        u = p.find("u")
+        if u and "DATE & TIME" in u.get_text(strip=True).upper():
+            date_time_p = p
+            break
     
-    -- The Most Popular Ending Station Hourly for Member Riders
-    SELECT COUNT(*) AS total, end_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-    FROM cyclistic.cyclisticclean
-    WHERE end_station_name = 'Clinton St & Washington Blvd' AND member_casual LIKE 'member%'
-    GROUP BY end_station_name, hour_of_day
-) AS combined_member
-GROUP BY member_popular_station, hour_of_day
-ORDER BY hour_of_day
-;
+    # Extract the actual date/time values
+    if date_time_p:
+        date_parts = [b.get_text(" ", strip=True) for b in date_time_p.find_all("b")]
+        date_time = " ".join(date_parts) if date_parts else None
+    else:
+        date_time = None
 
--- Similarly, Most Popular Casual Station Trips Per Hour
-SELECT start_station_name AS casual_popular_station,
-	hour_of_day,
-    SUM(total) AS total_trips
-FROM (
-	-- The Most Popular Starting Station Hourly for Casual Riders
-	SELECT COUNT(*) AS total, start_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-	FROM cyclistic.cyclisticclean
-	WHERE start_station_name = 'Streeter Dr & Grand Ave' AND member_casual LIKE 'casual%'
-	GROUP BY start_station_name, hour_of_day
+    if panel_body:
+        table = panel_body.find("table")
+        if table:
+            for row in table.find_all("tr"):
+                cols = row.find_all("td")
+                if len(cols) >= 2:
+                    # td0 = index, td1 = candidate name
+                    candidate_name = cols[1].get_text(strip=True)
+                    candidate_list.append(candidate_name)
 
-	UNION ALL
+    results.append({
+        "job_title": job_title,
+        "location": location,
+        "scrape_time": scrape_time,
+        "date_time": date_time,
+        "announcement": announcement,
+        "candidates": candidate_list,
+        
+    })
 
-	-- The Most Popular Ending Station Hourly for Casual Riders
-	SELECT COUNT(*) AS total, end_station_name, DATE_FORMAT(started_at, '%H') AS hour_of_day
-	FROM cyclistic.cyclisticclean
-	WHERE end_station_name = 'Streeter Dr & Grand Ave' AND member_casual LIKE 'casual%'
-	GROUP BY end_station_name, hour_of_day
-) AS combined_casual
-GROUP BY casual_popular_station, hour_of_day
-ORDER BY hour_of_day
-;
+df_new = pd.DataFrame(results)
+if os.path.exists("result.jsonl"):
+    df_old = pd.read_json("result.jsonl", lines = True)
+else:
+    df_old = pd.DataFrame(columns=df_new.columns)
 
--- Most Popular Casual Routes
-SELECT start_station_name, end_station_name,
-	   COUNT(*) AS most_popular, ROUND(AVG(start_lat), 4) AS start_lat,
-       ROUND(AVG(start_lng), 4) AS start_lng, ROUND(AVG(end_lat), 4) AS end_lat,
-       ROUND(AVG(end_lng), 4) AS end_lng, 
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'casual%'
-GROUP BY start_station_name, end_station_name
-ORDER BY most_popular desc
-LIMIT 10
-;
+# Merge and remove duplicates (by Position + Registration Date)
+df_combined = pd.concat([df_old, df_new], ignore_index=True)
+df_clean = df_combined.drop_duplicates(subset=["job_title", "announcement","location","date_time"], keep ='first')
 
--- Most Popular Member Routes
-SELECT start_station_name, end_station_name,
-	   COUNT(*) AS most_popular, ROUND(AVG(start_lat), 4) AS start_lat,
-       ROUND(AVG(start_lng), 4) AS start_lng, ROUND(AVG(end_lat), 4) AS end_lat,
-       ROUND(AVG(end_lng), 4) AS end_lng,
-       AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avg_trip_duration
-FROM cyclistic.cyclisticclean
-WHERE member_casual LIKE 'member%'
-GROUP BY start_station_name, end_station_name
-ORDER BY most_popular desc
-LIMIT 10
-;`,
+# Save the updated file
+df_clean.to_json("result.jsonl", orient="records", lines= True ,index=False)`,
 
-viz_query: `-- The following queries are used to create the visualizations in the dashboard
--- The goal of this query to find a big workable data to get hourly insights as well as geographical location to correlate between them
--- Calculate the average latitudes and longitudes for each station and group by stations, member_casual, hour of day
+scheduler: `name: Results Scraper Every 1 Days
 
-SELECT 
-	member_casual,
-    start_station_name AS all_stations,
-    hour_of_day,
-    SUM(total) AS total_trips,
-    ROUND(AVG(avgtd),2) AS avg_trip_duration,
-    ROUND(AVG(startlat), 4) AS start_lat,
-	ROUND(AVG(startlng), 4) AS start_lng, 
-    ROUND(AVG(endlat), 4) AS end_lat,
-	ROUND(AVG(endlng), 4) AS end_lng
-FROM (
-    -- The Most Popular Starting Station Hourly for Member Riders
-    SELECT member_casual, 
-    COUNT(*) AS total, 
-    start_station_name, 
-    DATE_FORMAT(started_at, '%H') AS hour_of_day,
-    AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avgtd,
-    ROUND(AVG(start_lat), 4) AS startlat,
-	ROUND(AVG(start_lng), 4) AS startlng, 
-    ROUND(AVG(end_lat), 4) AS endlat,
-	ROUND(AVG(end_lng), 4) AS endlng
-    FROM cyclistic.cyclisticclean
-    GROUP BY member_casual, start_station_name, hour_of_day
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Every 1 days 
+  workflow_dispatch:         # (optional) Manual trigger from GitHub
+
+permissions:
+  contents: write
+  
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📦 Checkout repository
+      uses: actions/checkout@v3
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 📚 Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: 🧹 Run the scraper script
+      working-directory: result_list
+      run: |
+        python result.py
+
+    - name: 💾 Commit Jsonl if changed
+      working-directory: result_list
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add result.jsonl
+        git commit -m "🔄 Update result list $(date '+%Y-%m-%d %H:%M')" || echo "No changes to commit"
+        git push
+      continue-on-error: true  # Prevents failure if there's nothing to commit`,
+
+normalizer: `import os
+import pandas as pd
+import datetime
+import re
+from dateutil import parser
+path_file =(r"C:\Users\hp\Desktop\ET-Airlines\result_list\result.jsonl")
+file = pd.read_json(path_file, lines = True)
+file["candidates"] = file["candidates"].apply(len)
+file["job_title"] = file["job_title"].str.lower()
+file["date_time"] = file["date_time"].str.lower()
+file["location"] = file["location"].str.lower()
+file["announcement"] = file["announcement"].str.lower()
+
+def trainee(title):
+    if not isinstance(title, str):
+        return None
+    is_trainee = title.lower()
+
+    # check if the title containes any 'trainee' in it
+    # If it contains that string then it is announcment for trainee's 
+    # We will create a column called title then we will assign 'trainee' or 'job' applicants
+    if "trainee" in is_trainee:
+        return "trainee"
+    else:
+        return "job"
+
+file["position"] = file["job_title"].apply(trainee)
+
+def normalize_titles(title):
+    if not isinstance(title, str):
+        return None
     
-    UNION ALL
-    
-    -- The Most Popular Ending Station Hourly for Member Riders
-    SELECT member_casual, 
-    COUNT(*) AS total, 
-    end_station_name, 
-    DATE_FORMAT(started_at, '%H') AS hour_of_day,
-    AVG(TIMESTAMPDIFF(MINUTE, started_at, ended_at)) AS avgtd,
-    ROUND(AVG(start_lat), 4) AS startlat,
-	ROUND(AVG(start_lng), 4) AS startlng, 
-    ROUND(AVG(end_lat), 4) AS endlat,
-	ROUND(AVG(end_lng), 4) AS endlng
-    FROM cyclistic.cyclisticclean
-    GROUP BY member_casual, end_station_name, hour_of_day
-) AS combined_count
-GROUP BY member_casual, all_stations, hour_of_day
-ORDER BY hour_of_day
-;
+    t = title.lower()
 
--- This data was later cleaned on Excel to remove inconsistent data for proper visualization`
+    # remove location indicators like "- jigjiga", "- hawassa", etc.
+    # (because location is already its own column)
+    t = re.sub(r"-\s*[a-z ]+$", "", t)
+
+    # remove meaningless prefixes
+    t = re.sub(r"\bet[- ]?sponsored\b", "", t)
+    t = re.sub(r"\bet\b", "", t)  # catches "ET-SPONSORED" or "ET "
+
+    # remove trainee/junior/assistant
+    t = re.sub(r"\btrainee\b", "", t)
+    t = re.sub(r"\bjr\b", "", t)
+    t = re.sub(r"\bjunior\b", "", t)
+    t = re.sub(r"\bassistant\b", "", t)
+    t = re.sub(r"\b(?![ac]\b)[a-z]\b", "", t)
+
+    # remove applicant language
+    t = re.sub(r"\bapplicant[s]?\b", "", t)
+
+    # remove extra punctuation and spaces
+    t = re.sub(r"[^a-z0-9/& ]+", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+
+    return t
+
+file["job_title"] = file["job_title"].apply(normalize_titles)
+
+def normalize_announcement(text):
+    text_lower = text.lower()
+    if "interview" in text_lower:
+        return "interview"
+    elif "written" in text_lower:
+        return "written exam"
+    elif "employment" in text_lower:
+        return "employment process"
+    elif "practical" in text_lower:
+        return "practical exam"
+    else:
+        return text
+
+file["announcement"]= file["announcement"].apply(normalize_announcement)
+
+def normalize_location(text):
+    if not isinstance(text, str):
+        return None
+    t = re.sub(r"[^a-z0-9\s]", " ", text.lower()).strip()
+    t = re.sub(r"\s+", " ", t)
+
+    # canonicalize some common city spellings/aliases
+    aliases = {
+        "gonder": "gondar",
+        "bahir": "bahir dar",
+        "haramaya": "harar",
+        "addis": "addis ababa",
+        "madda": "robe",
+        "goba": "robe",
+        "nekemte": "nekemte",
+        "wollega": "nekemte",
+        "kebridehar": "kebri dehar",
+        "kabri": "kebri dehar",
+        "dire": "dire dawa",
+        "semera": "semera",
+        "arbaminch": "arba minch",
+        "arba minch":"arba minch",
+        "ethiopian":"addia ababa"
+    }
+    for a, canon in aliases.items():
+        if a in t:
+            return canon
+        # fallback: return the cleaned token containing known city names
+    known_cities = [
+        "mekelle","dessie","gondar","harar","jigjiga","hawassa","nekemte",
+        "robe","semera","arba minch","bahir dar","dire dawa","gambella",
+        "shashemene","addis ababa","adama","wolkite","ambo","gode","jimma",
+        "assosa","kebri dehar"
+    ]
+    for city in known_cities:
+        if city in t:
+            return city
+
+    return t
+
+file["location"]=file["location"].apply(normalize_location)
+
+def clean_date_time(text):
+    try:
+        return parser.parse(str(text), fuzzy=True)
+    except:
+        return None
+
+file["date_time"]= file["date_time"].apply(clean_date_time)
+
+def map_region(location):
+    if not isinstance(location, str):
+        return None
+    l = location.lower()
+
+    region_map = [
+        (["mekelle"], "tigray"),
+        (["wollo","dessie","gondar","bahir dar"], "amhara"),
+        (["nekemte","adama","robe","goba","shashemene","gode","jimma","ambo","kebri dehar","kebridehar"], "oromia"),
+        (["hawassa"], "sidama"),
+        (["addis ababa","ethiopian"], "addis ababa"),
+        (["dire dawa","dire"], "dire dawa"),
+        (["jigjiga","kebri dehar","kebridehar"], "somali"),
+        (["gambella"], "gambella"),
+        (["assosa"], "benishangul-gumuz"),
+        (["harar","haramaya"], "harari"),
+        (["semera"], "afar"),
+        (["arba minch","wolkite"], "snnpr")
+    ]
+
+    for keys, region in region_map:
+        for key in keys:
+            if key in l:
+                return region
+    return "other"
+file["region"] = file["location"].apply(map_region)
+
+path_saving = (r"C:\Users\hp\Desktop\practices\0_Tabelau_analysis_files\ET_Airlines\FINAL CSV\result.csv")
+
+file.to_csv(path_saving, index = False)`
 };
 
 export default cyclistic;

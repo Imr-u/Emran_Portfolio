@@ -1,69 +1,46 @@
 import Code from "./codes/code";
 
 const ProjectList = {
-  SQL: [
+ Python: [
     {
-      name: "Cyclistic Bike Share Analysis",
+      name: "ET-Airlines Recquirment Process Analysis",
       image: "/assets/cyclistic.png",
-      medium: "https://medium.com/@rafsanahmed2828/from-data-to-insights-googles-cyclistic-case-study-04fb362c2d0d",
-      github: "https://github.com/rafsanahmed28/Cyclistic-Case-Study",
-      dataset: "https://divvy-tripdata.s3.amazonaws.com/index.html",
-      tags: ["MySQL", "Excel", "Tableau", "Data Visualization", "Data Analysis"],
+      medium: "https://medium.com/@imruabubeker/afri-rate-4d1e87baa1ad",
+      github: "https://github.com/Imr-u/ET-Airlines",
+      dataset: "https://github.com/Imr-u/ET-Airlines/blob/main/result_list/result.jsonl",
+      tags: ["Python", "ETL", "Tableau", "Data Visualization", "Data Analysis"],
       files: [
         {
           name: "README.md",
           type: "info",
-          content: "Cyclistic is a fictional bike-share company in Chicago. The goal of this project is to analyze the bike usage data to understand how different types of users (casual vs. annual members) use the service and to provide insights for marketing strategies. Learn more about my approach, analysis, and findings in the Medium article linked below.",
+          content: "Transforming raw recruitment data into strategic insights to map and improve the candidate journey for Africa's largest airline,we tried  identifying key bottlenecks and trends to optimize their trainee and employee recruitment strategy.",
         },
-        { name: "cleaning.sql", type: "code", content: Code("Cyclistic").cleaning, language: "sql" },
-        { name: "querying.sql", type: "code", content: Code("Cyclistic").querying, language: "sql" },
-        { name: "viz_query.sql", type: "code", content: Code("Cyclistic").viz_query, language: "sql" }
+        { name: "result.py", type: "code", content: Code("Cyclistic").scraper, language: "python" },
+        { name: "normalizer.py", type: "code", content: Code("Cyclistic").normalizer, language: "python" },
+        { name: "result_run_scraper.yml", type: "code", content: Code("Cyclistic").scheduler, language: "yml" }
       ],
     },
-
     {
-      name: "Data Cleaning - NashVille Housing Data",
-      image: "/assets/nashville.png",
-      github: "https://github.com/rafsanahmed28/Data-Cleaning-MySQL",
-      tags: ["MySQL", "Data Cleaning", "Data Transformation"],
-      dataset: "http://kaggle.com/datasets/tmthyjames/nashville-housing-data",
+      name: "Afri Rate",
+      image: "/assets/cyclistic.png",
+      medium: "https://medium.com/@imruabubeker/afri-rate-4d1e87baa1ad",
+      github: "https://github.com/Imr-u/ET-Airlines",
+      dataset: "https://github.com/Imr-u/ET-Airlines/blob/main/result_list/result.jsonl",
+      tags: ["Python", "ETL", "Tableau", "Data Visualization", "Data Analysis"],
       files: [
         {
           name: "README.md",
           type: "info",
-          content: "Cleaned and transformed Nashville housing data for analysis, focusing on data integrity and consistency. This project's goal was to go through the important steps of data cleaning and transformation, including removing duplicates, handling missing values, and ensuring data types are correct.",
+          content: "Developed an automated data platform that collects, processes, and serves daily exchange rates from five African central banks, transforming scattered official sources into a clean, reliable pan-African forex dataset.",
         },
-        {
-          name: "nasvhille.sql",
-          type: "code",
-          content: Code("Nashville"),
-          language: "sql",
-        },
+        { name: "ETB_scraper.py", type: "code", content: Code("Covid19").scraper, language: "python" },
+        { name: "normalizer.py", type: "code", content: Code("Covid19").normalizer, language: "python" },
+        { name: "ETB_scraper_runner.yml", type: "code", content: Code("Covid19").scheduler, language: "yml" }
       ],
     },
-
-    {
-      name: "Covid-19 Exploratory Data Analysis",
-      image: "/assets/covid19.png",
-      github: "https://github.com/rafsanahmed28/Covid-Data-Exploration-Project",
-      dataset: "https://ourworldindata.org/covid-deaths",
-      tags: ["MySQL", "Excel", "Tableau", "Data Visualization", "Data Analysis"],
-      files: [
-        {
-          name: "README.md",
-          type: "info",
-          content: "Performed exploratory data analysis on Covid-19 data to find the damage caused by the pandemic in different countries. The project focuses on data transformation, exploratory data analysis and visualization to provide insights into the impact of Covid-19 globally.",
-        },
-        {
-          name: "covid19.sql",
-          type: "code",
-          content: Code("Covid19"),
-          language: "sql",
-        },
-      ],
-    }
-  ],
-  Python: [
+ 
+  ], /*
+  SQL: [
     {
       name: "Movie Correlation Analysis",
       image: "/assets/correlation.png",
@@ -124,33 +101,33 @@ const ProjectList = {
         },
       ],
     },
-  ],
+  ], */
   Tableau: [
     {
-      name: "Cyclistic Case Study Visualization",
-      image: "/assets/cyclisticviz.png",
-      medium: "https://medium.com/@rafsanahmed2828/from-data-to-insights-googles-cyclistic-case-study-04fb362c2d0d",
-      tableau: "https://public.tableau.com/app/profile/rafsan.ahmed8668/viz/GoogleCyclisticCaseStudyVisualization/DashboardMain",
+      name: "ET-Airlines Analysis Dashboard",
+      image: "/assets/ETA_Dashboard.png",
+      medium: "https://medium.com/@imruabubeker/afri-rate-4d1e87baa1ad",
+      tableau: "https://public.tableau.com/app/profile/emran.abubeker/viz/Book1_17433207117740/FinalDashboard",
       tags: ["Tableau", "Data Visualization"],
       files: [
         {
           name: "README.md",
           type: "info",
-          content: "Designed an interactive Tableau dashboard for the Cyclistic Case Study, visualizing the seasonal trends and usage patterns during different times as well as different routes the users take. The dashboard helps us dive deeper into how the annual users differ from casual users.",
+          content: "Built an interactive Tableau dashboard analyzing Ethiopian Airlines' recruitment pipeline, visualizing hiring timelines, candidate funnel drop-off rates, and the effectiveness of different sourcing channels. The dashboard enables HR teams to identify bottlenecks and optimize their talent acquisition strategy for both trainee and employee programs.",
         }
       ],
     },
 
     {
-      name: "Covid-19 Data Visualization Dashboard",
-      image: "/assets/covid19viz.png",
-      tableau: "https://public.tableau.com/app/profile/rafsan.ahmed8668/viz/CovidDataVisualizationDashboard-May2024/Dashboard1",
+      name: "Afri Rate",
+      image: "/assets/Afri_rate.png",
+      tableau: "https://public.tableau.com/app/profile/emran.abubeker/viz/PFA_17633180789900/Dashboard1",
       tags: ["Tableau", "Data Visualization"],
       files: [
         {
           name: "README.md",
           type: "info",
-          content: "Developed a Tableau dashboard to visualize Covid-19 infection data across all the countries around the world. The dashboard also gives an overview of the global death count, continental death count, and a filtered view of percentage population infected by country.",
+          content: "Built an interactive dashboard that visualizes daily exchange rates from African central banks, tracking currency trends across Ethiopia, Nigeria, Egypt, Zambia, and Algeria through automated data pipelines and live updates.",
         }
       ],
     },
