@@ -11,7 +11,7 @@
   Built with <a href="https://react.dev/">React.js</a> utilizing <a href="https://gsap.com/"> GSAP Animations</a> and hosted with <a href="https://vercel.com/"> Vercel</a>
 </p>
 
-![homepage](https://raw.githubusercontent.com/rafsanahmed28/Rafsan/refs/heads/main/public/assets/Ehomepage.png)
+![homepage](https://github.com/Imr-u/Emran_Portfolio/blob/main/public/assets/Ehomepage.png)
 
 ## 💚 Credits 
 Rafsan Ahmed who let us custom his website
