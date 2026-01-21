@@ -11,7 +11,7 @@
 ![homepage](https://github.com/Imr-u/Emran_Portfolio/blob/main/public/assets/Ehomepage.png)
 
 ## 💚 Credits 
-Rafsan Ahmed who let us custom his website
+Rafsan Ahmed who let us custom his website 
 Robot Animation: [Shunya Koide](https://codepen.io/shunyadezain)
 
 Code references and design inspirations: [Gazi Jarin](https://github.com/gazijarin/Gazi) and [Brittany Chiang](https://github.com/bchiang7/v4)
